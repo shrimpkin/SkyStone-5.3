@@ -27,14 +27,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
@@ -83,7 +81,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  */
 
 
-@TeleOp(name="SKYSTONE Vuforia Nav", group ="Concept")
+@TeleOp(name="SKYSTONE Vuforia Navigation", group ="Concept")
 //@Disabled
 public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
 
@@ -109,7 +107,8 @@ public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
      * and paste it in to your code on the next line, between the double quotes.
      */
     private static final String VUFORIA_KEY =
-            " -- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+            "Abyd5Br/////AAABmRdvKE0dIk+VoE3dZUX80Qgvs0taq2LkrHwvZqfHxuRb/7H5kBamN+WGMyUKT/ECCRxHZ9umWluLjUXas7DxXSDi3BWN1FbACcFP9JllAwNAYwv98E0LTkAfd6Wqmg/xLsYUf2horiU5L+yPqaiho9MU/Kuan1Rv9YKZXgFHRneI84YbjsUuhLzM+yO63k1rQqFtUlSGZA64WI/lH/+simvahLPT+XbSeU8pCff3RB26LfRJUqscB3PE43E9+gdBqZ8S5wYChNKO3YDBf6wpGXhp7+Qj13X+7TC+CPykzyTHSShS1vGw8QMwbvZN3/WNLgkxV/o2bA3dbXCTrdXFNFO0wURB7o4YRxhTrj9q/2Jf ";
+    ;
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
     // We will define some constants and conversions here

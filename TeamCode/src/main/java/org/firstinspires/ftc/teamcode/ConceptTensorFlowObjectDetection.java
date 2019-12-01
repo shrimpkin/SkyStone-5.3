@@ -52,11 +52,15 @@ import java.util.List;
  * is explained below.
  */
 @TeleOp(name = "Concept: TensorFlow Object Detection", group = "Concept")
-@Disabled
+//@Disabled
 public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Stone";
     private static final String LABEL_SECOND_ELEMENT = "Skystone";
+
+    private double  cXScreen = 0;
+    private double cXBlock = 0;
+
 
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -70,8 +74,7 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
      * Once you've obtained a license key, copy the string from the Vuforia web site
      * and paste it in to your code on the next line, between the double quotes.
      */
-    private static final String VUFORIA_KEY =
-            " -- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+    private static final String VUFORIA_KEY = "Abyd5Br/////AAABmRdvKE0dIk+VoE3dZUX80Qgvs0taq2LkrHwvZqfHxuRb/7H5kBamN+WGMyUKT/ECCRxHZ9umWluLjUXas7DxXSDi3BWN1FbACcFP9JllAwNAYwv98E0LTkAfd6Wqmg/xLsYUf2horiU5L+yPqaiho9MU/Kuan1Rv9YKZXgFHRneI84YbjsUuhLzM+yO63k1rQqFtUlSGZA64WI/lH/+simvahLPT+XbSeU8pCff3RB26LfRJUqscB3PE43E9+gdBqZ8S5wYChNKO3YDBf6wpGXhp7+Qj13X+7TC+CPykzyTHSShS1vGw8QMwbvZN3/WNLgkxV/o2bA3dbXCTrdXFNFO0wURB7o4YRxhTrj9q/2Jf ";
 
     /**
      * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
@@ -87,6 +90,7 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
         initVuforia();
@@ -117,18 +121,32 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
                     // the last time that call was made.
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                     if (updatedRecognitions != null) {
-                      telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        telemetry.addData("# Object Detected", updatedRecognitions.size());
 
-                      // step through the list of recognitions and display boundary info.
-                      int i = 0;
-                      for (Recognition recognition : updatedRecognitions) {
-                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                          recognition.getLeft(), recognition.getTop());
-                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                recognition.getRight(), recognition.getBottom());
-                      }
-                      telemetry.update();
+                        // step through the list of recognitions and display boundary info.
+                        int i = 0;
+                        for (Recognition recognition : updatedRecognitions) {
+                            telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f", recognition.getLeft(), recognition.getTop());
+                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f", recognition.getRight(), recognition.getBottom());
+                            telemetry.addData("Object Size", recognition.getHeight() + "'" + recognition.getWidth());
+
+                            telemetry.addData("line break:"," --------------------------");
+                            // cXBlock = (recognition.getRight() - recognition.getLeft())/2;// getting center of X axis of the block
+                            telemetry.addData("cXBlock",cXBlock);
+
+                            if((recognition.getLeft() + recognition.getRight())/2 > 200){
+                                telemetry.addData("Action", "Go left");
+                            } else if(( recognition.getLeft() + recognition.getRight())/2 < 100){
+                                telemetry.addData("Action", "Go right");
+                            } else {
+                                telemetry.addData("Action", "Your good");
+                            }
+
+
+
+                        }
+                        telemetry.update();
                     }
                 }
             }
@@ -162,7 +180,7 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
      */
     private void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfodParameters.minimumConfidence = 0.8;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);

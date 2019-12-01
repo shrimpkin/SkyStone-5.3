@@ -58,6 +58,13 @@ public class DriveControls extends OpMode
     private DcMotor frontRightWheel;
     private DcMotor backRightWheel;
 
+
+    //constants for adjusting robot moving based off of weight distribution
+    private int flwChange = 1;
+    private int blwChange = 1;
+    private int frwChange = 1;
+    private int brwChange = 1;
+
     private String log = "Fields Initialized";
 
 
@@ -103,33 +110,29 @@ public class DriveControls extends OpMode
         float rear_left = forward + clockwise - right;
         float rear_right = forward - clockwise + right;
 
-        if(front_right > 1){
-            front_right= 1;
-        } else if(front_right < -1) {
-            front_right = -1;
-        }
+        front_left = clip(front_left,-1,1);
+        front_right = clip(front_right, -1, 1);
+        rear_right = clip(rear_right, -1, 1);
+        rear_left = clip(rear_left, -1,1);
 
-        if(rear_left > 1){
-            rear_left= 1;
-        } else if(front_right < -1) {
-            rear_left = -1;
-        }
-
-        if(rear_right> 1){
-            rear_right= 1;
-        } else if(rear_right < -1) {
-            rear_right = -1;
-        }
-
-        frontLeftWheel.setPower(front_left);
-        backLeftWheel.setPower(front_right);
-        frontRightWheel.setPower(rear_left);
-        backRightWheel.setPower(-rear_right);
+        frontLeftWheel.setPower(front_left * flwChange);
+        backLeftWheel.setPower(front_right * frwChange);
+        frontRightWheel.setPower(rear_left * blwChange);
+        backRightWheel.setPower(-rear_right * brwChange);
 
         telemetry.addData("rear left", frontRightWheel.getPower());
         telemetry.addData("front left", frontLeftWheel.getPower());
         telemetry.addData("rear right", backRightWheel.getPower());
         telemetry.addData("front right", backLeftWheel.getPower());
+    }
+
+    public float clip(float originalNumber, float min, float max)  {
+        if(originalNumber < min){
+            return min;
+        } else if (originalNumber > max) {
+            return max;
+        }
+        return originalNumber;
     }
 
 }
