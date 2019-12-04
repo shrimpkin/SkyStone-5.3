@@ -32,7 +32,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
 
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -65,6 +64,15 @@ public class DriveControls extends OpMode
     private int frwChange = 1;
     private int brwChange = 1;
 
+    private long StoredTime;
+    private boolean isFirstTime = true;
+
+    private float front_left;
+    private float rear_left;
+    private float front_right;
+    private float rear_right;
+
+    private boolean isSlow = false;
     private String log = "Fields Initialized";
 
 
@@ -99,16 +107,30 @@ public class DriveControls extends OpMode
         //getting horiz position of right joystick
         float right = gamepad1.left_stick_x;
 
+        boolean isB = gamepad1.b;
 
         //Doing the math to find the power value we need to set
         float temp = (float) (forward* (Math.cos(clockwise)) + right* (Math.sin(clockwise)));
         right = (float) ( -forward* (Math.sin(clockwise)) + right*(Math.cos(clockwise)));
         forward = temp;
 
-        float front_left = forward + clockwise + right;
-        float front_right = forward - clockwise - right;
-        float rear_left = forward + clockwise - right;
-        float rear_right = forward - clockwise + right;
+        if(isB && (StoredTime + 1000 > System.currentTimeMillis() || isFirstTime)) {
+            StoredTime = System.currentTimeMillis();
+            isSlow = !isSlow;
+            isFirstTime = false;
+        }
+
+        if(isSlow) {
+            flwChange *= .25;
+            frwChange *= .25;
+            brwChange *= .25;
+            blwChange *= .25;
+        }
+
+        front_left = forward + clockwise + right;
+        front_right = forward - clockwise - right;
+        rear_left = forward + clockwise - right;
+        rear_right = forward - clockwise + right;
 
         front_left = clip(front_left,-1,1);
         front_right = clip(front_right, -1, 1);

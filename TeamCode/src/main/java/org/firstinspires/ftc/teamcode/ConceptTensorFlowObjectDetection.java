@@ -38,6 +38,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import java.util.List;
 
@@ -60,6 +63,25 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
 
     private double leftX = 0;
     private  double cXScreen = 0;
+
+    private DcMotor frontLeftWheel;
+    private DcMotor backLeftWheel;
+    private DcMotor frontRightWheel;
+    private DcMotor backRightWheel;
+
+
+    //constants for adjusting robot moving based off of weight distribution
+    private int flwChange = 1;
+    private int blwChange = 1;
+    private int frwChange = 1;
+    private int brwChange = 1;
+
+    private float front_left;
+    private float rear_left;
+    private float front_right;
+    private float rear_right;
+
+    private String log = "Fields Initialized";
 
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -89,6 +111,16 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+        //maps each dcMotor to the corresponding name listed on the "Configure Robot"
+        frontLeftWheel = hardwareMap.dcMotor.get("frontLeft");
+        backRightWheel = hardwareMap.dcMotor.get("backRight");
+        frontRightWheel = hardwareMap.dcMotor.get("frontRight");
+        backLeftWheel =  hardwareMap.dcMotor.get("backLeft");
+
+        log = "hardwareMapped";
+        telemetry.addData("Out put", log);
+
 
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
@@ -122,6 +154,7 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
                     if (updatedRecognitions != null) {
                         telemetry.addData("# Object Detected", updatedRecognitions.size());
 
+
                         // step through the list of recognitions and display boundary info.
                         int i = 0;
                         for (Recognition recognition : updatedRecognitions) {
@@ -146,12 +179,37 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
                             if(leftX < cXScreen){
                                 /*changed math to use cXBlock instead of addition*/
                                 /* tried using negative values and switched the thing around a bit*/
+                                front_left = 1;
+                                rear_left = 1;
+                                front_right = 0;
+                                rear_right = 0;
                                 telemetry.addData("Action", "Go right");
                             } else if(leftX > cXScreen){
+                                front_left = -1;
+                                rear_left= -1;
+                                front_right = 0;
+                                rear_right = 0;
                                 telemetry.addData("Action", "Go left");
                             } else {
+                                front_left = 0;
+                                rear_left = 0;
+                                front_right = 0;
+                                rear_right = 0;
                                 telemetry.addData("Action", "Your good");
                             }
+
+
+
+
+                            frontLeftWheel.setPower(front_left * flwChange);
+                            backLeftWheel.setPower(front_right * frwChange);
+                            frontRightWheel.setPower(rear_left * blwChange);
+                            backRightWheel.setPower(-rear_right * brwChange);
+
+                            telemetry.addData("rear left", frontRightWheel.getPower());
+                            telemetry.addData("front left", frontLeftWheel.getPower());
+                            telemetry.addData("rear right", backRightWheel.getPower());
+                            telemetry.addData("front right", backLeftWheel.getPower());
                         }
                         telemetry.update();
                     }
