@@ -51,16 +51,15 @@ import java.util.List;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@TeleOp(name = "Concept: TensorFlow Object Detection", group = "Concept")
+@TeleOp(name = "Detect skystone position", group = "Concept")
 //@Disabled
 public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Stone";
     private static final String LABEL_SECOND_ELEMENT = "Skystone";
 
-    private double  cXScreen = 0;
-    private double cXBlock = 0;
-
+    private double leftX = 0;
+    private  double cXScreen = 0;
 
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -132,19 +131,27 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
                             telemetry.addData("Object Size", recognition.getHeight() + "'" + recognition.getWidth());
 
                             telemetry.addData("line break:"," --------------------------");
-                            // cXBlock = (recognition.getRight() - recognition.getLeft())/2;// getting center of X axis of the block
-                            telemetry.addData("cXBlock",cXBlock);
 
-                            if((recognition.getLeft() + recognition.getRight())/2 > 200){
-                                telemetry.addData("Action", "Go left");
-                            } else if(( recognition.getLeft() + recognition.getRight())/2 < 100){
+                            telemetry.addData("stone width", recognition.getWidth());//getting stone width
+                            telemetry.addData("Image Height", recognition.getWidth());//getting image height
+                            telemetry.addData("ImageWidth", recognition.getImageWidth()/2);//getting Image Height
+
+
+                             leftX = recognition.getLeft();// getting the left X of the stone
+                             cXScreen = recognition.getImageWidth()/2; // getting the center of X axis of the Image
+                            /*switched left and right*/
+                               telemetry.addData("cXBlock",leftX);
+
+
+                            if(leftX < cXScreen){
+                                /*changed math to use cXBlock instead of addition*/
+                                /* tried using negative values and switched the thing around a bit*/
                                 telemetry.addData("Action", "Go right");
+                            } else if(leftX > cXScreen){
+                                telemetry.addData("Action", "Go left");
                             } else {
                                 telemetry.addData("Action", "Your good");
                             }
-
-
-
                         }
                         telemetry.update();
                     }
