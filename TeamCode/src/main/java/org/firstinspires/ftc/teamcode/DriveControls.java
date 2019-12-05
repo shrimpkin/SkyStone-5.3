@@ -51,41 +51,42 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 //@Disabled
 public class DriveControls extends OpMode
 {
-    // Declare OpMode members.
+    //names of the motors
     private DcMotor frontLeftWheel;
     private DcMotor backLeftWheel;
     private DcMotor frontRightWheel;
     private DcMotor backRightWheel;
 
+    //timers and fields allowing for slow mode to occur
+    private long StoredTimeForSlow;
+    private boolean isFirstTime = true;
+    private boolean isSlow = false;
 
-    //constants for adjusting robot moving based off of weight distribution
+    //constants for adjusting robot moving based off of weight distribution and are also adjusted for slow mode by 1/4
     private int flwChange = 1;
     private int blwChange = 1;
     private int frwChange = 1;
     private int brwChange = 1;
 
-    private long StoredTimeForSlow;
-    private boolean isFirstTime = true;
-
+    //timers for updating motor accleration
     private long StoredTimeForMotors;
 
+    //actual motor power assignments
     private float front_left;
     private float rear_left;
     private float front_right;
     private float rear_right;
 
+    //target motor power assignments
     private float targetF_L;
     private float targetR_L;
     private float targetF_R;
     private float targetR_R;
 
+    //movements values gained from the remote controller
     private float clockwise;
     private float right;
     private float forward;
-
-    private boolean isSlow = false;
-    private String log = "Fields Initialized";
-
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -98,8 +99,8 @@ public class DriveControls extends OpMode
         frontRightWheel = hardwareMap.dcMotor.get("frontRight");
         backLeftWheel =  hardwareMap.dcMotor.get("backLeft");
 
-        log = "hardwareMapped";
-        telemetry.addData("Out put", log);
+        //telemetry sends data to robot controller
+        telemetry.addData("Output", "hardwareMapped");
 
     }
 
@@ -108,7 +109,6 @@ public class DriveControls extends OpMode
      */
     @Override
     public void loop() {
-        System.out.println("Am printing...");
         //getting horizontal position of left joystick
         clockwise = gamepad1.right_stick_x;
 
@@ -125,12 +125,25 @@ public class DriveControls extends OpMode
         right = (float) ( -forward* (Math.sin(clockwise)) + right*(Math.cos(clockwise)));
         forward = temp;
 
+        targetF_L = forward + clockwise + right;
+        targetF_R = forward - clockwise - right;
+        targetR_L = forward + clockwise - right;
+        targetR_R = forward - clockwise + right;
+
+        //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
+        front_left = clip(front_left,-1,1);
+        front_right = clip(front_right, -1, 1);
+        rear_right = clip(rear_right, -1, 1);
+        rear_left = clip(rear_left, -1,1);
+
+        //processing whether a slow mode should be implemented
         if(isB && (StoredTimeForSlow + 1000 > System.currentTimeMillis() || isFirstTime)) {
             StoredTimeForSlow = System.currentTimeMillis();
             isSlow = !isSlow;
             isFirstTime = false;
         }
 
+        //if yes slows robot by 1/4
         if(isSlow) {
             flwChange *= .25;
             frwChange *= .25;
@@ -138,33 +151,27 @@ public class DriveControls extends OpMode
             blwChange *= .25;
         }
 
-        targetF_L = forward + clockwise + right;
-        targetF_R = forward - clockwise - right;
-        targetR_L = forward + clockwise - right;
-        targetR_R = forward - clockwise + right;
+        //slow acceleration, check method for details
+        front_left = accelerate(targetF_L, front_left);
+        front_right=  accelerate(targetF_R, front_right);
+        rear_left = accelerate(targetR_L, rear_left);
+        rear_right = accelerate(targetR_R, rear_right);
 
-        front_left = clip(front_left,-1,1);
-        front_right = clip(front_right, -1, 1);
-        rear_right = clip(rear_right, -1, 1);
-        rear_left = clip(rear_left, -1,1);
-
-        accelerate(targetF_L, front_left);
-        accelerate(targetF_R, front_right);
-        accelerate(targetR_L, rear_left);
-        accelerate(targetR_R, rear_right);
-
+        //sends power value to the wheels
         frontLeftWheel.setPower(front_left * flwChange);
         backLeftWheel.setPower(front_right * frwChange);
         frontRightWheel.setPower(rear_left * blwChange);
         backRightWheel.setPower(-rear_right * brwChange);
 
+        //reports data to controller
         telemetry.addData("rear left", frontRightWheel.getPower());
         telemetry.addData("front left", frontLeftWheel.getPower());
         telemetry.addData("rear right", backRightWheel.getPower());
         telemetry.addData("front right", backLeftWheel.getPower());
     }
 
-    public float clip(float originalNumber, float min, float max)  {
+    private float clip(float originalNumber, float min, float max)  {
+        //takes a number and makes sure it is inbetween min and max, if is bigger/smaller returns max/min respectively
         if(originalNumber < min){
             return min;
         } else if (originalNumber > max) {
@@ -173,9 +180,12 @@ public class DriveControls extends OpMode
         return originalNumber;
     }
 
-    public float accelerate(float targetValue, float value) {
+    private float accelerate(float targetValue, float value) {
+        //makes sure 200 milliseconds has passed since the last update
         if(StoredTimeForMotors + 200 < System.currentTimeMillis()) {
             StoredTimeForMotors = System.currentTimeMillis();
+
+            //calculates how value should change to get closer to target value
             if(Math.abs(targetValue - value) < .1) {
                 value = targetValue;
             } else {
