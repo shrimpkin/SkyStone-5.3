@@ -179,7 +179,7 @@ public class DriveControls extends OpMode
             if(Math.abs(targetValue - value) < .1) {
                 value = targetValue;
             } else {
-                if(targetClockwise > clockwise) {
+                if(targetValue > value) {
                     value = targetValue - (float).1;
                 } else {
                     value = targetValue + (float).1;
