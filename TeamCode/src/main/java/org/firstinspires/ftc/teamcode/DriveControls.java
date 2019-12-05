@@ -64,13 +64,24 @@ public class DriveControls extends OpMode
     private int frwChange = 1;
     private int brwChange = 1;
 
-    private long StoredTime;
+    private long StoredTimeForSlow;
     private boolean isFirstTime = true;
+
+    private long StoredTimeForMotors;
 
     private float front_left;
     private float rear_left;
     private float front_right;
     private float rear_right;
+
+    private float targetF_L;
+    private float targetR_L;
+    private float targetF_R;
+    private float targetR_R;
+
+    private float clockwise;
+    private float right;
+    private float forward;
 
     private boolean isSlow = false;
     private String log = "Fields Initialized";
@@ -99,13 +110,13 @@ public class DriveControls extends OpMode
     public void loop() {
         System.out.println("Am printing...");
         //getting horizontal position of left joystick
-        float clockwise = gamepad1.right_stick_x;
+        clockwise = gamepad1.right_stick_x;
 
         //getting vertical position of left joystick
-        float forward = -gamepad1.left_stick_y;
+        forward = -gamepad1.left_stick_y;
 
         //getting horiz position of right joystick
-        float right = gamepad1.left_stick_x;
+        right = gamepad1.left_stick_x;
 
         boolean isB = gamepad1.b;
 
@@ -114,8 +125,8 @@ public class DriveControls extends OpMode
         right = (float) ( -forward* (Math.sin(clockwise)) + right*(Math.cos(clockwise)));
         forward = temp;
 
-        if(isB && (StoredTime + 1000 > System.currentTimeMillis() || isFirstTime)) {
-            StoredTime = System.currentTimeMillis();
+        if(isB && (StoredTimeForSlow + 1000 > System.currentTimeMillis() || isFirstTime)) {
+            StoredTimeForSlow = System.currentTimeMillis();
             isSlow = !isSlow;
             isFirstTime = false;
         }
@@ -127,15 +138,20 @@ public class DriveControls extends OpMode
             blwChange *= .25;
         }
 
-        front_left = forward + clockwise + right;
-        front_right = forward - clockwise - right;
-        rear_left = forward + clockwise - right;
-        rear_right = forward - clockwise + right;
+        targetF_L = forward + clockwise + right;
+        targetF_R = forward - clockwise - right;
+        targetR_L = forward + clockwise - right;
+        targetR_R = forward - clockwise + right;
 
         front_left = clip(front_left,-1,1);
         front_right = clip(front_right, -1, 1);
         rear_right = clip(rear_right, -1, 1);
         rear_left = clip(rear_left, -1,1);
+
+        accelerate(targetF_L, front_left);
+        accelerate(targetF_R, front_right);
+        accelerate(targetR_L, rear_left);
+        accelerate(targetR_R, rear_right);
 
         frontLeftWheel.setPower(front_left * flwChange);
         backLeftWheel.setPower(front_right * frwChange);
@@ -155,6 +171,24 @@ public class DriveControls extends OpMode
             return max;
         }
         return originalNumber;
+    }
+
+    public float accelerate(float targetValue, float value) {
+        if(StoredTimeForMotors + 200 < System.currentTimeMillis()) {
+            StoredTimeForMotors = System.currentTimeMillis();
+            if(Math.abs(targetValue - value) < .1) {
+                value = targetValue;
+            } else {
+                if(targetClockwise > clockwise) {
+                    value = targetValue - (float).1;
+                } else {
+                    value = targetValue + (float).1;
+                }
+            }
+
+        }
+        return value;
+
     }
 
 }
