@@ -47,7 +47,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Basic: Iterative OpMode", group="Iterative Opmode")
+@TeleOp(name="Wireless Drive Controls", group="Iterative Opmode")
 //@Disabled
 public class DriveControls extends OpMode
 {
@@ -125,10 +125,15 @@ public class DriveControls extends OpMode
         right = (float) ( -forward* (Math.sin(clockwise)) + right*(Math.cos(clockwise)));
         forward = temp;
 
-        targetF_L = forward + clockwise + right;
-        targetF_R = forward - clockwise - right;
-        targetR_L = forward + clockwise - right;
-        targetR_R = forward - clockwise + right;
+        front_left = forward + clockwise + right;
+        front_right = forward - clockwise - right;
+        rear_left = forward + clockwise - right;
+        rear_right = forward - clockwise + right;
+
+        //targetF_L = forward + clockwise + right;
+        //targetF_R = forward - clockwise - right;
+        //targetR_L = forward + clockwise - right;
+        //targetR_R = forward - clockwise + right;
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
@@ -151,23 +156,30 @@ public class DriveControls extends OpMode
             blwChange *= .25;
         }
 
+
+
         //slow acceleration, check method for details
-        front_left = accelerate(targetF_L, front_left);
-        front_right=  accelerate(targetF_R, front_right);
-        rear_left = accelerate(targetR_L, rear_left);
-        rear_right = accelerate(targetR_R, rear_right);
+        //front_left = accelerate(targetF_L, front_left);
+        //front_right=  accelerate(targetF_R, front_right);
+        //rear_left = accelerate(targetR_L, rear_left);
+        //rear_right = accelerate(targetR_R, rear_right);
 
         //sends power value to the wheels
-        frontLeftWheel.setPower(front_left * flwChange);
-        backLeftWheel.setPower(front_right * frwChange);
-        frontRightWheel.setPower(rear_left * blwChange);
-        backRightWheel.setPower(-rear_right * brwChange);
+        frontLeftWheel.setPower(-front_left * flwChange);
+        backLeftWheel.setPower(-front_right * frwChange);
+        frontRightWheel.setPower(-rear_left * blwChange);
+        backRightWheel.setPower(rear_right * brwChange);
 
         //reports data to controller
         telemetry.addData("rear left", frontRightWheel.getPower());
         telemetry.addData("front left", frontLeftWheel.getPower());
         telemetry.addData("rear right", backRightWheel.getPower());
         telemetry.addData("front right", backLeftWheel.getPower());
+        telemetry.addData("forward", forward);
+        telemetry.addData("right", right);
+        telemetry.addData("clockwise", clockwise);
+        telemetry.addData("isSlow", isSlow);
+
     }
 
     private float clip(float originalNumber, float min, float max)  {
