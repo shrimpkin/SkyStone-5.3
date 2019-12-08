@@ -50,7 +50,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 @TeleOp(name="Driving Controls", group="Iterative Opmode")
 //@Disabled
-public class Drive extends OpMode
+public class DriveControls extends OpMode
 {
     //names of the motors
     private DcMotor frontLeftWheel;
