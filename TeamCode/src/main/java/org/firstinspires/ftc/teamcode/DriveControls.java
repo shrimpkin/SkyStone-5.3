@@ -94,6 +94,7 @@ public class DriveControls extends OpMode
     private String movementMode;
 
     private boolean um;
+    private String log = "absolutely nothing";
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -163,22 +164,38 @@ public class DriveControls extends OpMode
             movementMode = movementModes[randomMovement];
         }
 
+
         if(movementMode.equals("forward")) {
             //sends power value to the wheels
-            frontLeftWheel.setPower(forward * flwChange);
-            backLeftWheel.setPower(-forward * frwChange);
-            frontRightWheel.setPower(forward * blwChange);
-            backRightWheel.setPower(forward * brwChange);
+            double forwardFLW = accelerate(forward, frontLeftWheel.getPower());
+            double forwardBLW = accelerate(forward, frontLeftWheel.getPower());
+            double forwardFRW = accelerate(forward, frontLeftWheel.getPower());
+            double forwardBRW = accelerate(forward, frontLeftWheel.getPower());
+
+            frontLeftWheel.setPower(forwardFLW * flwChange);
+            backLeftWheel.setPower(-forwardBLW * frwChange);
+            frontRightWheel.setPower(forwardFRW * blwChange);
+            backRightWheel.setPower(forwardBRW * brwChange);
         } else if (movementMode.equals("strafe")) {
-            frontLeftWheel.setPower(-right * flwChange);
-            backLeftWheel.setPower(right * frwChange);
-            frontRightWheel.setPower(right * blwChange);
-            backRightWheel.setPower(right * brwChange);
+            double rightFLW = accelerate(right, frontLeftWheel.getPower());
+            double rightBLW = accelerate(right, frontLeftWheel.getPower());
+            double rightFRW = accelerate(right, frontLeftWheel.getPower());
+            double rightBRW = accelerate(right, frontLeftWheel.getPower());
+
+            frontLeftWheel.setPower(-rightFLW * flwChange);
+            backLeftWheel.setPower(rightBLW * frwChange);
+            frontRightWheel.setPower(rightFRW * blwChange);
+            backRightWheel.setPower(rightBRW * brwChange);
         } else {
-            frontLeftWheel.setPower(-clockwise * flwChange);
-            backLeftWheel.setPower(-clockwise * frwChange);
-            frontRightWheel.setPower(clockwise * blwChange);
-            backRightWheel.setPower(-clockwise * brwChange);
+            double clockwiseFLW = accelerate(clockwise, frontLeftWheel.getPower());
+            double clockwiseBLW = accelerate(clockwise, frontLeftWheel.getPower());
+            double clockwiseFRW = accelerate(clockwise, frontLeftWheel.getPower());
+            double clockwiseBRW = accelerate(clockwise, frontLeftWheel.getPower());
+
+            frontLeftWheel.setPower(-clockwiseFLW * flwChange);
+            backLeftWheel.setPower(-clockwiseBLW * frwChange);
+            frontRightWheel.setPower(clockwiseFRW * blwChange);
+            backRightWheel.setPower(-clockwiseBRW * brwChange);
         }
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
@@ -210,15 +227,6 @@ public class DriveControls extends OpMode
         }
 
 
-
-        //slow acceleration, check method for details
-        //front_left = accelerate(targetF_L, front_left);
-        //front_right=  accelerate(targetF_R, front_right);
-        //rear_left = accelerate(targetR_L, rear_left);
-        //rear_right = accelerate(targetR_R, rear_right);
-
-
-
         //reports data to controller
         telemetry.addData("rear left", frontRightWheel.getPower());
         telemetry.addData("front left", frontLeftWheel.getPower());
@@ -230,7 +238,7 @@ public class DriveControls extends OpMode
         telemetry.addData("isSlow", isSlow);
         telemetry.addData("MovementMode", movementMode);
         telemetry.addData("Um", um);
-
+        telemetry.addData("acceleration", log);
     }
 
     private float clip(float originalNumber, float min, float max)  {
@@ -243,19 +251,23 @@ public class DriveControls extends OpMode
         return originalNumber;
     }
 
-    private float accelerate(float targetValue, float value) {
+    private float accelerate(float value, double targetValue) {
+        log = "nothing Executed";
         //makes sure 200 milliseconds has passed since the last update
         if(StoredTimeForMotors + 200 < System.currentTimeMillis()) {
             StoredTimeForMotors = System.currentTimeMillis();
-
+            log = "time executed";
             //calculates how value should change to get closer to target value
             if(Math.abs(targetValue - value) < .1) {
-                value = targetValue;
+                value = (float)targetValue;
+                log = "value set";
             } else {
                 if(targetValue > value) {
-                    value = targetValue - (float).1;
+                    value = (float)targetValue - (float).1;
+                    log = " value set";
                 } else {
-                    value = targetValue + (float).1;
+                    value = (float)targetValue + (float).1;
+                    log = "value set";
                 }
             }
 
