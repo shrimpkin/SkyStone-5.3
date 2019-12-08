@@ -63,10 +63,10 @@ public class DriveControls extends OpMode
     private boolean isSlow = false;
 
     //constants for adjusting robot moving based off of weight distribution and are also adjusted for slow mode by 1/4
-    private int flwChange = 1;
-    private int blwChange = 1;
-    private int frwChange = 1;
-    private int brwChange = 1;
+    private double flwChange = 1;
+    private double blwChange = 1;
+    private double frwChange = 1;
+    private double brwChange = 1;
 
     //timers for updating motor accleration
     private long StoredTimeForMotors;
@@ -87,6 +87,8 @@ public class DriveControls extends OpMode
     private float clockwise;
     private float right;
     private float forward;
+    private float rTrigger;
+    private float lTrigger;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -109,14 +111,23 @@ public class DriveControls extends OpMode
      */
     @Override
     public void loop() {
-        //getting horizontal position of left joystick
-        clockwise = gamepad1.right_stick_x;
-
         //getting vertical position of left joystick
-        forward = -gamepad1.left_stick_y;
+        clockwise = gamepad1.right_stick_y;
 
         //getting horiz position of right joystick
-        right = gamepad1.left_stick_x;
+        right = -gamepad1.left_stick_x;
+
+        //
+        lTrigger = gamepad1.left_trigger;
+
+        //
+        rTrigger = gamepad1.right_trigger;
+
+        if(lTrigger > 0) {
+            forward = -lTrigger;
+        } else {
+            forward = rTrigger;
+        }
 
         boolean isB = gamepad1.b;
 
@@ -142,7 +153,7 @@ public class DriveControls extends OpMode
         rear_left = clip(rear_left, -1,1);
 
         //processing whether a slow mode should be implemented
-        if(isB && (StoredTimeForSlow + 1000 > System.currentTimeMillis() || isFirstTime)) {
+        if(isB && (StoredTimeForSlow + 1000  > System.currentTimeMillis() || isFirstTime)) {
             StoredTimeForSlow = System.currentTimeMillis();
             isSlow = !isSlow;
             isFirstTime = false;
@@ -150,10 +161,10 @@ public class DriveControls extends OpMode
 
         //if yes slows robot by 1/4
         if(isSlow) {
-            flwChange *= .25;
-            frwChange *= .25;
-            brwChange *= .25;
-            blwChange *= .25;
+            flwChange = .5;
+            frwChange = .5;
+            brwChange = .5;
+            blwChange = .5;
         }
 
 
