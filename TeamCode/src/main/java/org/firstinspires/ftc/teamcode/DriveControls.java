@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import java.util.Random;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
@@ -47,9 +48,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Wireless Drive Controls", group="Iterative Opmode")
+@TeleOp(name="Driving Controls", group="Iterative Opmode")
 //@Disabled
-public class DriveControls extends OpMode
+public class Drive extends OpMode
 {
     //names of the motors
     private DcMotor frontLeftWheel;
@@ -90,6 +91,9 @@ public class DriveControls extends OpMode
     private float rTrigger;
     private float lTrigger;
 
+    private String movementMode;
+
+    private boolean um;
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -112,7 +116,7 @@ public class DriveControls extends OpMode
     @Override
     public void loop() {
         //getting vertical position of left joystick
-        clockwise = gamepad1.right_stick_y;
+        forward = gamepad1.right_stick_y;
 
         //getting horiz position of right joystick
         right = -gamepad1.left_stick_x;
@@ -124,27 +128,58 @@ public class DriveControls extends OpMode
         rTrigger = gamepad1.right_trigger;
 
         if(lTrigger > 0) {
-            forward = -lTrigger;
+            clockwise = -lTrigger;
         } else {
-            forward = rTrigger;
+            clockwise = rTrigger;
         }
 
-        boolean isB = gamepad1.b;
+        if(Math.abs(forward) > Math.abs(right) && Math.abs(forward) > Math.abs(clockwise)) {
+            movementMode = "forward";
+        } else if(Math.abs(right) > Math.abs(clockwise)) {
+            movementMode = "strafe";
+        } else if(clockwise > 0) {
+            movementMode = "turn";
+        } else {
+            movementMode = "no value";
+        }
 
-        //Doing the math to find the power value we need to set
-        float temp = (float) (forward* (Math.cos(clockwise)) + right* (Math.sin(clockwise)));
-        right = (float) ( -forward* (Math.sin(clockwise)) + right*(Math.cos(clockwise)));
-        forward = temp;
+        boolean isY = gamepad1.y;
 
-        front_left = forward + clockwise + right;
-        front_right = forward - clockwise - right;
-        rear_left = forward + clockwise - right;
-        rear_right = forward - clockwise + right;
+        if(isY && isSlow) {
+            um = true;
+        }
 
-        //targetF_L = forward + clockwise + right;
-        //targetF_R = forward - clockwise - right;
-        //targetR_L = forward + clockwise - right;
-        //targetR_R = forward - clockwise + right;
+        if(um) {
+            Random random = new Random();
+            flwChange = random.nextDouble();
+            frwChange = random.nextDouble();
+            blwChange = random.nextDouble();
+            brwChange = random.nextDouble();
+
+            String[] movementModes = {"forward", "strafe", "turn"};
+
+
+            int randomMovement = random.nextInt(2);
+            movementMode = movementModes[randomMovement];
+        }
+
+        if(movementMode.equals("forward")) {
+            //sends power value to the wheels
+            frontLeftWheel.setPower(forward * flwChange);
+            backLeftWheel.setPower(-forward * frwChange);
+            frontRightWheel.setPower(forward * blwChange);
+            backRightWheel.setPower(forward * brwChange);
+        } else if (movementMode.equals("strafe")) {
+            frontLeftWheel.setPower(-right * flwChange);
+            backLeftWheel.setPower(right * frwChange);
+            frontRightWheel.setPower(right * blwChange);
+            backRightWheel.setPower(right * brwChange);
+        } else {
+            frontLeftWheel.setPower(-clockwise * flwChange);
+            backLeftWheel.setPower(-clockwise * frwChange);
+            frontRightWheel.setPower(clockwise * blwChange);
+            backRightWheel.setPower(-clockwise * brwChange);
+        }
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
@@ -152,8 +187,10 @@ public class DriveControls extends OpMode
         rear_right = clip(rear_right, -1, 1);
         rear_left = clip(rear_left, -1,1);
 
+        boolean isB = gamepad1.b;
+
         //processing whether a slow mode should be implemented
-        if(isB && (StoredTimeForSlow + 1000  > System.currentTimeMillis() || isFirstTime)) {
+        if(isB && (StoredTimeForSlow + 1000 < System.currentTimeMillis() || isFirstTime)) {
             StoredTimeForSlow = System.currentTimeMillis();
             isSlow = !isSlow;
             isFirstTime = false;
@@ -165,6 +202,11 @@ public class DriveControls extends OpMode
             frwChange = .5;
             brwChange = .5;
             blwChange = .5;
+        } else {
+            flwChange = 1;
+            frwChange = 1;
+            brwChange = 1;
+            blwChange = 1;
         }
 
 
@@ -175,11 +217,7 @@ public class DriveControls extends OpMode
         //rear_left = accelerate(targetR_L, rear_left);
         //rear_right = accelerate(targetR_R, rear_right);
 
-        //sends power value to the wheels
-        frontLeftWheel.setPower(-front_left * flwChange);
-        backLeftWheel.setPower(-front_right * frwChange);
-        frontRightWheel.setPower(-rear_left * blwChange);
-        backRightWheel.setPower(rear_right * brwChange);
+
 
         //reports data to controller
         telemetry.addData("rear left", frontRightWheel.getPower());
@@ -190,6 +228,8 @@ public class DriveControls extends OpMode
         telemetry.addData("right", right);
         telemetry.addData("clockwise", clockwise);
         telemetry.addData("isSlow", isSlow);
+        telemetry.addData("MovementMode", movementMode);
+        telemetry.addData("Um", um);
 
     }
 
@@ -223,5 +263,6 @@ public class DriveControls extends OpMode
         return value;
 
     }
+
 
 }
