@@ -90,6 +90,8 @@ public class DriveControls extends OpMode
     private float forward;
     private float rTrigger;
     private float lTrigger;
+    private boolean lButton;
+    private boolean rButton;
 
     private String movementMode;
 
@@ -120,7 +122,17 @@ public class DriveControls extends OpMode
         forward = gamepad1.right_stick_y;
 
         //getting horiz position of right joystick
-        right = -gamepad1.left_stick_x;
+        lButton = gamepad1.left_bumper;
+
+        rButton = gamepad1.right_bumper;
+
+        if(lButton) {
+            right = -1;
+        } else if(rButton) {
+            right = 1;
+        } else {
+            right = 0;
+        }
 
         //
         lTrigger = gamepad1.left_trigger;
