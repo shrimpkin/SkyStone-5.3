@@ -59,8 +59,6 @@ public class DriveControls extends OpMode
     private DcMotor backRightWheel;
 
     //timers and fields allowing for slow mode to occur
-    private long StoredTimeForSlow;
-    private boolean isFirstTime = true;
     private boolean isSlow = false;
 
     //constants for adjusting robot moving based off of weight distribution and are also adjusted for slow mode by 1/4
@@ -93,9 +91,9 @@ public class DriveControls extends OpMode
     private boolean lButton;
     private boolean rButton;
 
+    //used for deciding which motors to use
     private String movementMode;
 
-    private boolean um;
     private String log = "absolutely nothing";
     /*
      * Code to run ONCE when the driver hits INIT
@@ -110,6 +108,7 @@ public class DriveControls extends OpMode
 
         //telemetry sends data to robot controller
         telemetry.addData("Output", "hardwareMapped");
+        StoredTimeForMotors = System.currentTimeMillis();
 
     }
 
@@ -150,64 +149,33 @@ public class DriveControls extends OpMode
             movementMode = "forward";
         } else if(Math.abs(right) > Math.abs(clockwise)) {
             movementMode = "strafe";
-        } else if(clockwise > 0) {
+        } else if(Math.abs(clockwise) > 0) {
             movementMode = "turn";
         } else {
             movementMode = "no value";
         }
 
-        boolean isY = gamepad1.y;
-
-        if(isY && isSlow) {
-            um = true;
-        }
-
-        if(um) {
-            Random random = new Random();
-            flwChange = random.nextDouble();
-            frwChange = random.nextDouble();
-            blwChange = random.nextDouble();
-            brwChange = random.nextDouble();
-
-            String[] movementModes = {"forward", "strafe", "turn"};
-
-
-            int randomMovement = random.nextInt(2);
-            movementMode = movementModes[randomMovement];
-        }
-
-
         if(movementMode.equals("forward")) {
             //sends power value to the wheels
-            double forwardFLW = accelerate(forward, frontLeftWheel.getPower());
-            double forwardBLW = accelerate(forward, frontLeftWheel.getPower());
-            double forwardFRW = accelerate(forward, frontLeftWheel.getPower());
-            double forwardBRW = accelerate(forward, frontLeftWheel.getPower());
-
-            frontLeftWheel.setPower(forwardFLW * flwChange);
-            backLeftWheel.setPower(-forwardBLW * frwChange);
-            frontRightWheel.setPower(forwardFRW * blwChange);
-            backRightWheel.setPower(forwardBRW * brwChange);
+            frontLeftWheel.setPower(forward * flwChange);
+            backLeftWheel.setPower(-forward * frwChange);
+            frontRightWheel.setPower(forward * blwChange);
+            backRightWheel.setPower(forward * brwChange);
         } else if (movementMode.equals("strafe")) {
-            double rightFLW = accelerate(right, frontLeftWheel.getPower());
-            double rightBLW = accelerate(right, frontLeftWheel.getPower());
-            double rightFRW = accelerate(right, frontLeftWheel.getPower());
-            double rightBRW = accelerate(right, frontLeftWheel.getPower());
-
-            frontLeftWheel.setPower(-rightFLW * flwChange);
-            backLeftWheel.setPower(rightBLW * frwChange);
-            frontRightWheel.setPower(rightFRW * blwChange);
-            backRightWheel.setPower(rightBRW * brwChange);
+            frontLeftWheel.setPower(-right * flwChange);
+            backLeftWheel.setPower(right * frwChange);
+            frontRightWheel.setPower(right * blwChange);
+            backRightWheel.setPower(right * brwChange);
+        } else if(movementMode.equals("turn")){
+            frontLeftWheel.setPower(-clockwise * flwChange);
+            backLeftWheel.setPower(-clockwise * frwChange);
+            frontRightWheel.setPower(clockwise * blwChange);
+            backRightWheel.setPower(-clockwise * brwChange);
         } else {
-            double clockwiseFLW = accelerate(clockwise, frontLeftWheel.getPower());
-            double clockwiseBLW = accelerate(clockwise, frontLeftWheel.getPower());
-            double clockwiseFRW = accelerate(clockwise, frontLeftWheel.getPower());
-            double clockwiseBRW = accelerate(clockwise, frontLeftWheel.getPower());
-
-            frontLeftWheel.setPower(-clockwiseFLW * flwChange);
-            backLeftWheel.setPower(-clockwiseBLW * frwChange);
-            frontRightWheel.setPower(clockwiseFRW * blwChange);
-            backRightWheel.setPower(-clockwiseBRW * brwChange);
+            frontLeftWheel.setPower(0);
+            backLeftWheel.setPower(0);
+            frontRightWheel.setPower(0);
+            backRightWheel.setPower(0);
         }
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
@@ -219,13 +187,13 @@ public class DriveControls extends OpMode
         boolean isB = gamepad1.b;
 
         //processing whether a slow mode should be implemented
-        if(isB && (StoredTimeForSlow + 1000 < System.currentTimeMillis() || isFirstTime)) {
-            StoredTimeForSlow = System.currentTimeMillis();
-            isSlow = !isSlow;
-            isFirstTime = false;
+        if(isB) {
+            isSlow = true;
+        } else {
+            isSlow = false;
         }
 
-        //if yes slows robot by 1/4
+        //if yes slows robot by 1/2
         if(isSlow) {
             flwChange = .5;
             frwChange = .5;
@@ -249,7 +217,6 @@ public class DriveControls extends OpMode
         telemetry.addData("clockwise", clockwise);
         telemetry.addData("isSlow", isSlow);
         telemetry.addData("MovementMode", movementMode);
-        telemetry.addData("Um", um);
         telemetry.addData("acceleration", log);
     }
 
@@ -262,31 +229,5 @@ public class DriveControls extends OpMode
         }
         return originalNumber;
     }
-
-    private float accelerate(float value, double targetValue) {
-        log = "nothing Executed";
-        //makes sure 200 milliseconds has passed since the last update
-        if(StoredTimeForMotors + 200 < System.currentTimeMillis()) {
-            StoredTimeForMotors = System.currentTimeMillis();
-            log = "time executed";
-            //calculates how value should change to get closer to target value
-            if(Math.abs(targetValue - value) < .1) {
-                value = (float)targetValue;
-                log = "value set";
-            } else {
-                if(targetValue > value) {
-                    value = (float)targetValue - (float).1;
-                    log = " value set";
-                } else {
-                    value = (float)targetValue + (float).1;
-                    log = "value set";
-                }
-            }
-
-        }
-        return value;
-
-    }
-
 
 }
