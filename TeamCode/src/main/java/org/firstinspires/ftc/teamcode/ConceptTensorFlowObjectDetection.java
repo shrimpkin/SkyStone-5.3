@@ -62,7 +62,8 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
     private static final String LABEL_SECOND_ELEMENT = "Skystone";
 
     private double leftX = 0;
-    private  double cXScreen = 0;
+    private double stoneCX = 0;
+    private  double screenCX = 0;
 
     private DcMotor frontLeftWheel;
     private DcMotor backLeftWheel;
@@ -158,10 +159,12 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
                         // step through the list of recognitions and display boundary info.
                         int i = 0;
                         for (Recognition recognition : updatedRecognitions) {
-                            telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f", recognition.getLeft(), recognition.getTop());
-                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f", recognition.getRight(), recognition.getBottom());
-                            telemetry.addData("Object Size", recognition.getHeight() + "'" + recognition.getWidth());
+
+                            // [ some of the \telemetry lines are comment to reduce the information logged on the screen]
+                            // telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                            // telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f", recognition.getLeft(), recognition.getTop());
+                            //telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f", recognition.getRight(), recognition.getBottom());
+                            // telemetry.addData("Object Size", recognition.getHeight() + "'" + recognition.getWidth());
 
                             telemetry.addData("line break:"," --------------------------");
 
@@ -169,27 +172,40 @@ public class ConceptTensorFlowObjectDetection extends LinearOpMode {
                             telemetry.addData("Image Height", recognition.getWidth());//getting image height
                             telemetry.addData("ImageWidth", recognition.getImageWidth()/2);//getting Image Height
 
-
-                             leftX = recognition.getLeft();// getting the left X of the stone
-                             cXScreen = recognition.getImageWidth()/2; // getting the center of X axis of the Image
+                            /**
+                             * Centering the Robot to the block/stone Explanation:
+                             * We are no longer going to use the top left X of the stone to position the robot to the stone because
+                             * when the robot gets closer to the stone we lose track of the  top left X and we would end up doing more work to make this work,
+                             * so we are going to use the center X of the stone this will work better because its always going to be easy for the camera to see the center of the stone even if the robot is far or close to the stone
+                             * the code below has been changed to work as mentioned above.
+                             *
+                             * NOTE: the code running below only logs "go left" or "go right" basing on the center X of the block[@var stoneCX] and the center X of the screen or Image[@var scree]
+                             * we need to create a threshold that will tell if the stone is in center
+                             * since we are going to use the logitech camera, we are going to use a different sample file
+                             * that contain packages supporting extanernal camera usage [THIS FILE SAMPLE IS LOCATED IN FtcRobotController/org.firstinspires.ftc.robotcontroller/external.samples/ConceptTensorFlowObjectDetectionWebcom]
+                             * */
+                             //leftX = recognition.getLeft();// get the left X of the stone
+                             stoneCX = (recognition.getRight() + recognition.getLeft())/2;//get center X of stone
+                             screenCX = recognition.getImageWidth()/2; // get center X  of the Image
                             /*switched left and right*/
-                               telemetry.addData("cXBlock",leftX);
+                             //  telemetry.addData("cXBlock",);
+                            telemetry.addData("stoneCX", stoneCX);
 
 
-                            if(leftX < cXScreen){
+                            if(stoneCX < screenCX){
                                 /*changed math to use cXBlock instead of addition*/
                                 /* tried using negative values and switched the thing around a bit*/
                                 front_left = 1;
                                 rear_left = 1;
                                 front_right = 0;
                                 rear_right = 0;
-                                telemetry.addData("Action", "Go right");
-                            } else if(leftX > cXScreen){
+                                telemetry.addData("Action", "Go left");
+                            } else if(stoneCX > screenCX){
                                 front_left = -1;
                                 rear_left= -1;
                                 front_right = 0;
                                 rear_right = 0;
-                                telemetry.addData("Action", "Go left");
+                                telemetry.addData("Action", "Go right");
                             } else {
                                 front_left = 0;
                                 rear_left = 0;

@@ -76,12 +76,6 @@ public class DriveControls extends OpMode
     private float front_right;
     private float rear_right;
 
-    //target motor power assignments
-    private float targetF_L;
-    private float targetR_L;
-    private float targetF_R;
-    private float targetR_R;
-
     //movements values gained from the remote controller
     private float clockwise;
     private float right;
@@ -195,10 +189,10 @@ public class DriveControls extends OpMode
 
         //if yes slows robot by 1/2
         if(isSlow) {
-            flwChange = .5;
-            frwChange = .5;
-            brwChange = .5;
-            blwChange = .5;
+            flwChange = .2;
+            frwChange = .2;
+            brwChange = .2;
+            blwChange = .2;
         } else {
             flwChange = 1;
             frwChange = 1;
