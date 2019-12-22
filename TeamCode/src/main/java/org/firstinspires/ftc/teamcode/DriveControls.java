@@ -57,6 +57,8 @@ public class DriveControls extends OpMode
     private DcMotor backLeftWheel;
     private DcMotor frontRightWheel;
     private DcMotor backRightWheel;
+    private DcMotor armHorizontal;
+    private DcMotor armVertical;
 
     //timers and fields allowing for slow mode to occur
     private boolean isSlow = false;
@@ -75,6 +77,8 @@ public class DriveControls extends OpMode
     private float rear_left;
     private float front_right;
     private float rear_right;
+    private float arm_horiz;
+    private float arm_vert;
 
     //movements values gained from the remote controller
     private float clockwise;
@@ -99,6 +103,8 @@ public class DriveControls extends OpMode
         backRightWheel = hardwareMap.dcMotor.get("backRight");
         frontRightWheel = hardwareMap.dcMotor.get("frontRight");
         backLeftWheel =  hardwareMap.dcMotor.get("backLeft");
+        armHorizontal = hardwareMap.dcMotor.get("armHorizontal");
+        armVertical = hardwareMap.dcMotor.get("armVertical");
 
         //telemetry sends data to robot controller
         telemetry.addData("Output", "hardwareMapped");
@@ -171,6 +177,11 @@ public class DriveControls extends OpMode
             frontRightWheel.setPower(0);
             backRightWheel.setPower(0);
         }
+        arm_horiz = gamepad2.right_stick_x;
+        arm_vert = gamepad2.right_stick_y;
+
+        armHorizontal.setPower(arm_horiz);
+        armVertical.setPower(arm_vert);
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
@@ -202,6 +213,8 @@ public class DriveControls extends OpMode
 
 
         //reports data to controller
+        telemetry.addData("arm horiz", armHorizontal.getPower());
+        telemetry.addData("arm vert", armVertical.getPower());
         telemetry.addData("rear left", frontRightWheel.getPower());
         telemetry.addData("front left", frontLeftWheel.getPower());
         telemetry.addData("rear right", backRightWheel.getPower());
