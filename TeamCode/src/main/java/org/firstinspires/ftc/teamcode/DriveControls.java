@@ -57,6 +57,7 @@ public class DriveControls extends OpMode
     private DcMotor backLeftWheel;
     private DcMotor frontRightWheel;
     private DcMotor backRightWheel;
+
     private DcMotor armHorizontal;
     private DcMotor armVertical;
 
@@ -68,9 +69,8 @@ public class DriveControls extends OpMode
     private double blwChange = 1;
     private double frwChange = 1;
     private double brwChange = 1;
-
-    //timers for updating motor accleration
-    private long StoredTimeForMotors;
+    private double armHorizChange = 1;
+    private double armVertChange = 1;
 
     //actual motor power assignments
     private float front_left;
@@ -108,8 +108,6 @@ public class DriveControls extends OpMode
 
         //telemetry sends data to robot controller
         telemetry.addData("Output", "hardwareMapped");
-        StoredTimeForMotors = System.currentTimeMillis();
-
     }
 
     /*
@@ -120,9 +118,7 @@ public class DriveControls extends OpMode
         //getting vertical position of left joystick
         forward = gamepad1.right_stick_y;
 
-        //getting horiz position of right joystick
         lButton = gamepad1.left_bumper;
-
         rButton = gamepad1.right_bumper;
 
         if(lButton) {
@@ -180,8 +176,8 @@ public class DriveControls extends OpMode
         arm_horiz = gamepad2.right_stick_x;
         arm_vert = gamepad2.right_stick_y;
 
-        armHorizontal.setPower(arm_horiz);
-        armVertical.setPower(arm_vert);
+        armHorizontal.setPower(arm_horiz * armHorizChange);
+        armVertical.setPower(arm_vert * armVertChange);
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
@@ -198,7 +194,7 @@ public class DriveControls extends OpMode
             isSlow = false;
         }
 
-        //if yes slows robot by 1/2
+        //if yes slows robot by 1/5
         if(isSlow) {
             flwChange = .2;
             frwChange = .2;

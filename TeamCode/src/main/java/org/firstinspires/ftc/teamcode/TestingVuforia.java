@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
@@ -71,6 +72,8 @@ public class TestingVuforia extends LinearOpMode {
     private float front_right;
     private float rear_right;
     private String log = "";
+
+    boolean hasStrafed = false;
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
      * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
@@ -137,38 +140,74 @@ public class TestingVuforia extends LinearOpMode {
             while (opModeIsActive()) {
                 if (tfod != null) {
                     // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
+                    // the last time that call was made
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
+                    if(updatedRecognitions == null) {
+                        frontLeftWheel.setPower(0);
+                        frontRightWheel.setPower(0);
+                        backLeftWheel.setPower(0);
+                        backRightWheel.setPower(0);
+                    } else if (updatedRecognitions != null) {
                         telemetry.addData("# Object Detected", updatedRecognitions.size());
                         // step through the list of recognitions and display boundary info.
                         int i = 0;
+
+
                         for (Recognition recognition : updatedRecognitions) {
+                            float imageHeight = recognition.getImageHeight();
+                            float blockHeight = recognition.getHeight();
+
+                            telemetry.addData("blockHeight", blockHeight);
+                            telemetry.addData("imageHeight", imageHeight);
                             telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
                             telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
                                     recognition.getLeft(), recognition.getTop());
                             telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
                                     recognition.getRight(), recognition.getBottom());
 
-                            float midpoint = (recognition.getLeft() + recognition.getRight()) /2;
-                            float multiplier = 0;
-                            if(midpoint > 500) {
-                                multiplier = (((int)midpoint - 500) / 100) + 1;
-                                log = "trying to go left";
-                                sleep(200);
-                            } else if(midpoint < 300) {
-                                multiplier = -1 - (((int)500 - midpoint) / 100);
-                                log = "trying to go right";
-                                sleep(200);
+                            telemetry.addData("Code is up to date", "true");
+                            if(hasStrafed == false) {
+                                float midpoint = (recognition.getLeft() + recognition.getRight()) /2;
+                                float multiplier = 0;
+                                if(midpoint > 500) {
+                                    multiplier = (((int)midpoint - 500) / 100) + 1;
+                                    log = "trying to go left (check)";
+                                    sleep(200);
+                                } else if(midpoint < 300) {
+                                    multiplier = -1 - (((int)500 - midpoint) / 100);
+                                    log = "trying to go right";
+                                    sleep(200);
+                                } else {
+                                    multiplier = 0;
+                                    log = "we good";
+                                    hasStrafed = true;
+                                }
+                                frontLeftWheel.setPower(.1 * multiplier);
+                                backLeftWheel.setPower(-.1 * multiplier);
+                                frontRightWheel.setPower(-.1 * multiplier);
+                                backRightWheel.setPower(-.1 * multiplier);
                             } else {
-                                multiplier = 0;
-                                log = "we good";
+                                if( blockHeight/ imageHeight < .5) {
+                                    frontLeftWheel.setPower(-.3);
+                                    backLeftWheel.setPower(.3);
+                                    frontRightWheel.setPower(-.3);
+                                    backRightWheel.setPower(-.3);
+                                    telemetry.addData("detecting stuff", true);
+                                } else {
+                                    frontLeftWheel.setPower(0);
+                                    backLeftWheel.setPower(0);
+                                    frontRightWheel.setPower(0);
+                                    backRightWheel.setPower(0);
+                                    telemetry.addData("detecting stuff", false);
+                                }
                             }
+                            telemetry.addData("Angle to unit", recognition.estimateAngleToObject(AngleUnit.DEGREES));
 
-                            frontLeftWheel.setPower(.1 * multiplier);
-                            backLeftWheel.setPower(-.1 * multiplier);
-                            frontRightWheel.setPower(-.1 * multiplier);
-                            backRightWheel.setPower(-.1 * multiplier);
+
+
+
+
+
 
                             telemetry.addData("Log", log);
 
