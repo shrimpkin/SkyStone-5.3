@@ -29,14 +29,10 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import java.util.Random;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -55,7 +51,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@Autonomous(name = "Concept: TensorFlow Object Detection Webcam", group = "Concept")
+@Autonomous(name = "Autonomous Android", group = "Concept")
 
 public class TestingVuforia extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
@@ -74,6 +70,7 @@ public class TestingVuforia extends LinearOpMode {
     private String log = "";
 
     boolean hasStrafed = false;
+    //-------------------
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
      * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
@@ -157,40 +154,46 @@ public class TestingVuforia extends LinearOpMode {
                             float imageHeight = recognition.getImageHeight();
                             float blockHeight = recognition.getHeight();
 
+                            //-----------------------
+//                            stoneCX = (recognition.getRight() + recognition.getLeft())/2;//get center X of stone
+//                            screenCX = recognition.getImageWidth()/2; // get center X  of the Image
+//                            telemetry.addData("screenCX", screenCX);
+//                            telemetry.addData("stoneCX", stoneCX);
+//                            telemetry.addData("width", recognition.getImageWidth());
+                            //------------------------
+
                             telemetry.addData("blockHeight", blockHeight);
                             telemetry.addData("imageHeight", imageHeight);
                             telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                    recognition.getLeft(), recognition.getTop());
-                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                    recognition.getRight(), recognition.getBottom());
+                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f", recognition.getLeft(), recognition.getTop());
+                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f", recognition.getRight(), recognition.getBottom());
 
-                            telemetry.addData("Code is up to date", "true");
+
                             if(hasStrafed == false) {
                                 float midpoint = (recognition.getLeft() + recognition.getRight()) /2;
-                                float multiplier = 0;
+                                float multiplier ;
                                 if(midpoint > 500) {
                                     multiplier = (((int)midpoint - 500) / 100) + 1;
-                                    log = "trying to go left (check)";
+                                    log = "Adjusting Right";
                                     sleep(200);
                                 } else if(midpoint < 300) {
-                                    multiplier = -1 - (((int)500 - midpoint) / 100);
-                                    log = "trying to go right";
+                                    multiplier = -1 - ((500 - midpoint) / 100);
+                                    log = "Adjusting Left";
                                     sleep(200);
                                 } else {
                                     multiplier = 0;
-                                    log = "we good";
+                                    log = "In acceptable range";
                                     hasStrafed = true;
                                 }
-                                frontLeftWheel.setPower(.1 * multiplier);
-                                backLeftWheel.setPower(-.1 * multiplier);
-                                frontRightWheel.setPower(-.1 * multiplier);
-                                backRightWheel.setPower(-.1 * multiplier);
+                                frontLeftWheel.setPower(-0.1 * multiplier);
+                                backLeftWheel.setPower(0.1 * multiplier);
+                                frontRightWheel.setPower(-0.1 * multiplier);
+                                backRightWheel.setPower(0.1 * multiplier);
                             } else {
                                 if( blockHeight/ imageHeight < .5) {
                                     frontLeftWheel.setPower(-.3);
                                     backLeftWheel.setPower(.3);
-                                    frontRightWheel.setPower(-.3);
+                                    frontRightWheel.setPower(.3);
                                     backRightWheel.setPower(-.3);
                                     telemetry.addData("detecting stuff", true);
                                 } else {
@@ -201,14 +204,8 @@ public class TestingVuforia extends LinearOpMode {
                                     telemetry.addData("detecting stuff", false);
                                 }
                             }
+
                             telemetry.addData("Angle to unit", recognition.estimateAngleToObject(AngleUnit.DEGREES));
-
-
-
-
-
-
-
                             telemetry.addData("Log", log);
 
                         }

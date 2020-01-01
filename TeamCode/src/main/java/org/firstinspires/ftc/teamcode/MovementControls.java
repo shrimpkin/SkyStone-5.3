@@ -30,9 +30,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import java.util.Random;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+
 
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -48,9 +49,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Driving Controls", group="Iterative Opmode")
+@TeleOp(name="Movement Controls", group="Iterative Opmode")
 //@Disabled
-public class DriveControls extends OpMode
+public class  MovementControls extends OpMode
 {
     //names of the motors
     private DcMotor frontLeftWheel;
@@ -60,6 +61,7 @@ public class DriveControls extends OpMode
 
     private DcMotor armHorizontal;
     private DcMotor armVertical;
+    private Servo armGrab;
 
     //timers and fields allowing for slow mode to occur
     private boolean isSlow = false;
@@ -84,6 +86,7 @@ public class DriveControls extends OpMode
     private float clockwise;
     private float right;
     private float forward;
+    private float forward2;
     private float rTrigger;
     private float lTrigger;
     private boolean lButton;
@@ -105,6 +108,8 @@ public class DriveControls extends OpMode
         backLeftWheel =  hardwareMap.dcMotor.get("backLeft");
         armHorizontal = hardwareMap.dcMotor.get("armHorizontal");
         armVertical = hardwareMap.dcMotor.get("armVertical");
+        armGrab = hardwareMap.servo.get("armGrab");
+
 
         //telemetry sends data to robot controller
         telemetry.addData("Output", "hardwareMapped");
@@ -115,8 +120,16 @@ public class DriveControls extends OpMode
      */
     @Override
     public void loop() {
+        float servoMovement = gamepad2.left_stick_y;
+        armGrab.setPosition(servoMovement);
+
         //getting vertical position of left joystick
         forward = gamepad1.right_stick_y;
+        forward2 = gamepad1.left_stick_y;
+
+        if(Math.abs(forward2) > Math.abs(forward)) {
+            forward = forward2;
+        }
 
         lButton = gamepad1.left_bumper;
         rButton = gamepad1.right_bumper;
@@ -155,18 +168,21 @@ public class DriveControls extends OpMode
             //sends power value to the wheels
             frontLeftWheel.setPower(forward * flwChange);
             backLeftWheel.setPower(-forward * frwChange);
-            frontRightWheel.setPower(forward * blwChange);
+            frontRightWheel.setPower(-forward * blwChange);
             backRightWheel.setPower(forward * brwChange);
+
         } else if (movementMode.equals("strafe")) {
             frontLeftWheel.setPower(-right * flwChange);
             backLeftWheel.setPower(right * frwChange);
-            frontRightWheel.setPower(right * blwChange);
+            frontRightWheel.setPower(-right * blwChange);
             backRightWheel.setPower(right * brwChange);
+
         } else if(movementMode.equals("turn")){
             frontLeftWheel.setPower(-clockwise * flwChange);
             backLeftWheel.setPower(-clockwise * frwChange);
-            frontRightWheel.setPower(clockwise * blwChange);
+            frontRightWheel.setPower(-clockwise * blwChange);
             backRightWheel.setPower(-clockwise * brwChange);
+
         } else {
             frontLeftWheel.setPower(0);
             backLeftWheel.setPower(0);
@@ -206,9 +222,8 @@ public class DriveControls extends OpMode
             brwChange = 1;
             blwChange = 1;
         }
-
-
-        //reports data to controller
+        //  reports data to controller
+        telemetry.addData("arm grabber", armGrab.getPosition());
         telemetry.addData("arm horiz", armHorizontal.getPower());
         telemetry.addData("arm vert", armVertical.getPower());
         telemetry.addData("rear left", frontRightWheel.getPower());
