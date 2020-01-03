@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 
+
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -110,9 +111,9 @@ public class  MovementControls extends OpMode
         armVertical = hardwareMap.dcMotor.get("armVertical");
         armGrab = hardwareMap.servo.get("armGrab");
 
-
+        armGrab.setPosition(.25);
         //telemetry sends data to robot controller
-        telemetry.addData("Output", "hardwareMapped");
+        telemetry.addData("Output", "hardwareMapped!");
     }
 
     /*
@@ -121,6 +122,11 @@ public class  MovementControls extends OpMode
     @Override
     public void loop() {
         float servoMovement = gamepad2.left_stick_y;
+        if(servoMovement < .25) {
+            servoMovement = (float).25;
+        } else if (servoMovement > .6) {
+            servoMovement = (float).6;
+        }
         armGrab.setPosition(servoMovement);
 
         //getting vertical position of left joystick
@@ -189,11 +195,28 @@ public class  MovementControls extends OpMode
             frontRightWheel.setPower(0);
             backRightWheel.setPower(0);
         }
+
         arm_horiz = gamepad2.right_stick_x;
         arm_vert = gamepad2.right_stick_y;
 
-        armHorizontal.setPower(arm_horiz * armHorizChange);
-        armVertical.setPower(arm_vert * armVertChange);
+
+        int arm_vert_target = (int)arm_vert * 100 + armVertical.getCurrentPosition();
+        if( arm_vert_target > 4000) {
+            arm_vert_target = 4000;
+        }
+
+        int arm_horiz_target = (int)arm_horiz * 100 + armVertical.getCurrentPosition();
+        if(arm_horiz_target > 1000) {
+            arm_horiz_target = 1000;
+        }
+
+        armVertical.setTargetPosition(arm_vert_target);
+        armVertical.setPower(.4);
+        armVertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        armHorizontal.setTargetPosition(arm_horiz_target);
+        armHorizontal.setPower(.4);
+        armHorizontal.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
@@ -225,6 +248,8 @@ public class  MovementControls extends OpMode
         //  reports data to controller
         telemetry.addData("arm grabber", armGrab.getPosition());
         telemetry.addData("arm horiz", armHorizontal.getPower());
+        telemetry.addData("arm vert target Position", arm_vert_target);
+        telemetry.addData("arm vert current position", armVertical.getCurrentPosition());
         telemetry.addData("arm vert", armVertical.getPower());
         telemetry.addData("rear left", frontRightWheel.getPower());
         telemetry.addData("front left", frontLeftWheel.getPower());

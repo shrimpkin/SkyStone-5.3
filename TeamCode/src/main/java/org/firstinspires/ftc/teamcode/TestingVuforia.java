@@ -173,11 +173,11 @@ public class TestingVuforia extends LinearOpMode {
                                 float midpoint = (recognition.getLeft() + recognition.getRight()) /2;
                                 float multiplier ;
                                 if(midpoint > 500) {
-                                    multiplier = (((int)midpoint - 500) / 100) + 1;
+                                    multiplier = -(((int)midpoint - 500) / 100) - 1;
                                     log = "Adjusting Right";
                                     sleep(200);
                                 } else if(midpoint < 300) {
-                                    multiplier = -1 - ((500 - midpoint) / 100);
+                                    multiplier = 1 + ((500 - midpoint) / 100);
                                     log = "Adjusting Left";
                                     sleep(200);
                                 } else {
