@@ -27,45 +27,39 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
-/*
- * This is an example LinearOpMode that shows how to use
- * a Modern Robotics Optical Distance Sensor
- * It assumes that the ODS sensor is configured with a name of "sensor_ods".
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
-@TeleOp(name = "Sensor: MR ODS", group = "Sensor")
-@Disabled
-public class SensorMROpticalDistance extends LinearOpMode {
+@TeleOp(name="SENSOR", group="Linear Opmode")
+//@Disabled
+public class DistanceSnsor extends LinearOpMode {
 
-  OpticalDistanceSensor odsSensor;  // Hardware Device Object
+    // Declare OpMode members.
+    private ElapsedTime runtime = new ElapsedTime();
+    OpticalDistanceSensor  odsSensor;
 
-  @Override
-  public void runOpMode() {
+    @Override
+    public void runOpMode() {
 
-    // get a reference to our Light Sensor object.
-    odsSensor = hardwareMap.get(OpticalDistanceSensor.class, "sensor_ods");
+         odsSensor = hardwareMap.opticalDistanceSensor.get("sensor_ods");
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+     odsSensor.enableLed(true);
+        // Wait for the game to start (driver presses PLAY)
+        waitForStart();
+        runtime.reset();
 
-    // wait for the start button to be pressed.
-    waitForStart();
-
-    // while the op mode is active, loop and read the light levels.
-    // Note we use opModeIsActive() as our loop condition because it is an interruptible method.
-    while (opModeIsActive()) {
-
-      // send the info back to driver station using telemetry function.
-      telemetry.addData("Raw",    odsSensor.getRawLightDetected());
-      telemetry.addData("Normal", odsSensor.getLightDetected());
-
-      telemetry.update();
+        // run until the end of the match (driver presses STOP)
+        while (opModeIsActive()) {
+            telemetry.addData("Light Detected", odsSensor.getRawLightDetected());
+            telemetry.update();
+        }
     }
-  }
 }

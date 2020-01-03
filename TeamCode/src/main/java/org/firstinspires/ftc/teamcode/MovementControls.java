@@ -50,7 +50,7 @@ import com.qualcomm.robotcore.hardware.Servo;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Movement Controls", group="Iterative Opmode")
+@TeleOp(name="Movement Controls-", group="Iterative Opmode")
 //@Disabled
 public class  MovementControls extends OpMode
 {
@@ -112,6 +112,15 @@ public class  MovementControls extends OpMode
         armGrab = hardwareMap.servo.get("armGrab");
 
         armGrab.setPosition(.25);
+
+        armVertical.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armHorizontal.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armVertical.setTargetPosition(0);
+        armHorizontal.setTargetPosition(0);
+        armVertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armHorizontal.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         //telemetry sends data to robot controller
         telemetry.addData("Output", "hardwareMapped!");
     }
@@ -199,24 +208,25 @@ public class  MovementControls extends OpMode
         arm_horiz = gamepad2.right_stick_x;
         arm_vert = gamepad2.right_stick_y;
 
-
+        //setting new target for vertical arm to reach and bounding it between two values
         int arm_vert_target = (int)arm_vert * 100 + armVertical.getCurrentPosition();
-        if( arm_vert_target > 4000) {
-            arm_vert_target = 4000;
+        if( arm_vert_target > 500) {
+            arm_vert_target = 500;
+        } else if (arm_vert_target < -500) {
+            arm_vert_target = -500;
         }
 
-        int arm_horiz_target = (int)arm_horiz * 100 + armVertical.getCurrentPosition();
+        int arm_horiz_target = (int)arm_horiz * 100 + armHorizontal.getCurrentPosition();
         if(arm_horiz_target > 1000) {
             arm_horiz_target = 1000;
+
         }
 
         armVertical.setTargetPosition(arm_vert_target);
         armVertical.setPower(.4);
-        armVertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         armHorizontal.setTargetPosition(arm_horiz_target);
         armHorizontal.setPower(.4);
-        armHorizontal.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
@@ -248,8 +258,10 @@ public class  MovementControls extends OpMode
         //  reports data to controller
         telemetry.addData("arm grabber", armGrab.getPosition());
         telemetry.addData("arm horiz", armHorizontal.getPower());
-        telemetry.addData("arm vert target Position", arm_vert_target);
+        telemetry.addData("arm vert target poistion", armVertical.getTargetPosition());
         telemetry.addData("arm vert current position", armVertical.getCurrentPosition());
+        telemetry.addData("arm horiz target position", armHorizontal.getTargetPosition());
+        telemetry.addData("arm horiz current position", armHorizontal.getCurrentPosition());
         telemetry.addData("arm vert", armVertical.getPower());
         telemetry.addData("rear left", frontRightWheel.getPower());
         telemetry.addData("front left", frontLeftWheel.getPower());
