@@ -50,11 +50,11 @@ import com.qualcomm.robotcore.hardware.Servo;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Movement Controls-", group="Iterative Opmode")
+@TeleOp(name="Movement Controls-1.24", group="Iterative Opmode")
 //@Disabled
 public class  MovementControls extends OpMode
 {
-    //names of the motors
+    //names of the motors and servos
     private DcMotor frontLeftWheel;
     private DcMotor backLeftWheel;
     private DcMotor frontRightWheel;
@@ -63,6 +63,8 @@ public class  MovementControls extends OpMode
     private DcMotor armHorizontal;
     private DcMotor armVertical;
     private Servo armGrab;
+    private Servo servoRight;
+    private Servo servoLeft;
 
     //timers and fields allowing for slow mode to occur
     private boolean isSlow = false;
@@ -83,6 +85,7 @@ public class  MovementControls extends OpMode
     private float arm_horiz;
     private float arm_vert;
 
+
     //movements values gained from the remote controller
     private float clockwise;
     private float right;
@@ -97,6 +100,7 @@ public class  MovementControls extends OpMode
     private String movementMode;
 
     private String log = "absolutely nothing";
+    private String servoPosition;
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -111,15 +115,21 @@ public class  MovementControls extends OpMode
         armVertical = hardwareMap.dcMotor.get("armVertical");
         armGrab = hardwareMap.servo.get("armGrab");
 
-        armGrab.setPosition(.25);
+        servoRight = hardwareMap.servo.get("servoRight");
+        servoLeft = hardwareMap.servo.get("servoLeft");
+
+        armGrab.setPosition(.8);
+        servoRight.setPosition(0);
+        servoLeft.setPosition(0);
 
         armVertical.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armHorizontal.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         armVertical.setTargetPosition(0);
         armHorizontal.setTargetPosition(0);
-        armVertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armHorizontal.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armVertical.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armHorizontal.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
         //telemetry sends data to robot controller
         telemetry.addData("Output", "hardwareMapped!");
@@ -130,13 +140,7 @@ public class  MovementControls extends OpMode
      */
     @Override
     public void loop() {
-        float servoMovement = gamepad2.left_stick_y;
-        if(servoMovement < .25) {
-            servoMovement = (float).25;
-        } else if (servoMovement > .6) {
-            servoMovement = (float).6;
-        }
-        armGrab.setPosition(servoMovement);
+
 
         //getting vertical position of left joystick
         forward = gamepad1.right_stick_y;
@@ -146,16 +150,7 @@ public class  MovementControls extends OpMode
             forward = forward2;
         }
 
-        lButton = gamepad1.left_bumper;
-        rButton = gamepad1.right_bumper;
-
-        if(lButton) {
-            right = -1;
-        } else if(rButton) {
-            right = 1;
-        } else {
-            right = 0;
-        }
+        right = gamepad1.right_stick_x;
 
         //
         lTrigger = gamepad1.left_trigger;
@@ -205,29 +200,60 @@ public class  MovementControls extends OpMode
             backRightWheel.setPower(0);
         }
 
+        boolean controlOverride = gamepad2.a;
+
+        if(controlOverride != true) {
+            controlOverride = false;
+        }
+
         arm_horiz = gamepad2.right_stick_x;
         arm_vert = gamepad2.right_stick_y;
+        float servoMovement = gamepad2.left_stick_y;
 
-        //setting new target for vertical arm to reach and bounding it between two values
-        int arm_vert_target = (int)arm_vert * 100 + armVertical.getCurrentPosition();
-        if( arm_vert_target > 500) {
-            arm_vert_target = 500;
-        } else if (arm_vert_target < -500) {
-            arm_vert_target = -500;
+        if(controlOverride == false) {
+            //setting new target for vertical arm to reach and bounding it between two values
+            if (armVertical.getCurrentPosition() < -5500) {
+                arm_vert = (float) .2;
+            } else if (armVertical.getCurrentPosition() < -5300 && arm_vert < 0) {
+                arm_vert = (float) 0;
+            }
+
+            if (-armVertical.getCurrentPosition() < 0) {
+                arm_vert = (float) -.2;
+            } else if (armVertical.getCurrentPosition() > -200 && arm_vert > 0) {
+                arm_vert = 0;
+            }
+
+            if (armHorizontal.getCurrentPosition() > 7000) {
+                arm_horiz = (float) -.2;
+            } else if (armHorizontal.getCurrentPosition() > 6800 && arm_horiz > 0) {
+                arm_horiz = (float) 0;
+            }
+
+            if (armHorizontal.getCurrentPosition() < 0 && arm_horiz < 0) {
+                arm_horiz = 0;
+            }
+
+            if(armGrab.getPosition() <= .25 && servoMovement <= 0) {
+                servoMovement = (float).25;
+            } else if (armGrab.getPosition() >= .8 && servoMovement >= 0) {
+                servoMovement = (float).8;
+            }
         }
+        armGrab.setPosition(servoMovement);
+        armVertical.setPower(arm_vert * armVertChange);
+        armHorizontal.setPower(arm_horiz * armHorizChange);
 
-        int arm_horiz_target = (int)arm_horiz * 100 + armHorizontal.getCurrentPosition();
-        if(arm_horiz_target > 1000) {
-            arm_horiz_target = 1000;
+        boolean leftBumper = gamepad2.left_bumper;
+        boolean rightBumper = gamepad2.right_bumper;
 
+        if(leftBumper || rightBumper) {
+            servoLeft.setPosition(.5);
+            servoRight.setPosition(.5);
+        } else {
+            servoLeft.setPosition(0);
+            servoRight.setPosition(1);
         }
-
-        armVertical.setTargetPosition(arm_vert_target);
-        armVertical.setPower(.4);
-
-        armHorizontal.setTargetPosition(arm_horiz_target);
-        armHorizontal.setPower(.4);
-
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
         front_right = clip(front_right, -1, 1);
@@ -249,13 +275,24 @@ public class  MovementControls extends OpMode
             frwChange = .2;
             brwChange = .2;
             blwChange = .2;
+            armHorizChange = .2;
+            armVertChange = .2;
         } else {
             flwChange = 1;
             frwChange = 1;
             brwChange = 1;
             blwChange = 1;
+            armHorizChange = 1;
+            armVertChange = 1;
         }
         //  reports data to controller
+        if(leftBumper|| rightBumper) {
+            servoPosition = "grabbing";
+        } else {
+            servoPosition = "not grabbing";
+        }
+
+        telemetry.addData("front servo position",  servoPosition);
         telemetry.addData("arm grabber", armGrab.getPosition());
         telemetry.addData("arm horiz", armHorizontal.getPower());
         telemetry.addData("arm vert target poistion", armVertical.getTargetPosition());
@@ -272,7 +309,6 @@ public class  MovementControls extends OpMode
         telemetry.addData("clockwise", clockwise);
         telemetry.addData("isSlow", isSlow);
         telemetry.addData("MovementMode", movementMode);
-        telemetry.addData("acceleration", log);
     }
 
     private float clip(float originalNumber, float min, float max)  {
