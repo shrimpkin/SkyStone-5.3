@@ -68,6 +68,8 @@ public class  MovementControls extends OpMode
 
     //timers and fields allowing for slow mode to occur
     private boolean isSlow = false;
+    private float lastSlowTime;
+    private boolean isFirstSlow;
 
     //constants for adjusting robot moving based off of weight distribution and are also adjusted for slow mode by 1/4
     private double flwChange = 1;
@@ -88,13 +90,14 @@ public class  MovementControls extends OpMode
 
     //movements values gained from the remote controller
     private float clockwise;
+    private float clockwise2;
     private float right;
+    private float right2;
     private float forward;
     private float forward2;
     private float rTrigger;
     private float lTrigger;
-    private boolean lButton;
-    private boolean rButton;
+    private boolean shouldReset;
 
     //used for deciding which motors to use
     private String movementMode;
@@ -115,10 +118,12 @@ public class  MovementControls extends OpMode
         armVertical = hardwareMap.dcMotor.get("armVertical");
         armGrab = hardwareMap.servo.get("armGrab");
 
+        lastSlowTime = System.currentTimeMillis();
+
         servoRight = hardwareMap.servo.get("servoRight");
         servoLeft = hardwareMap.servo.get("servoLeft");
 
-        armGrab.setPosition(.8);
+        armGrab.setPosition(.25);
         servoRight.setPosition(0);
         servoLeft.setPosition(0);
 
@@ -150,18 +155,20 @@ public class  MovementControls extends OpMode
             forward = forward2;
         }
 
-        right = gamepad1.right_stick_x;
+        clockwise = gamepad1.right_stick_x;
+        clockwise2 = gamepad1.left_stick_x;
+
+        if(Math.abs(clockwise2) > Math.abs(clockwise)) {
+            clockwise = clockwise2;
+        }
+        //
+        right = gamepad1.left_trigger;
 
         //
-        lTrigger = gamepad1.left_trigger;
+        right2 = -gamepad1.right_trigger;
 
-        //
-        rTrigger = gamepad1.right_trigger;
-
-        if(lTrigger > 0) {
-            clockwise = -lTrigger;
-        } else {
-            clockwise = rTrigger;
+        if(Math.abs(right2) > Math.abs(clockwise)) {
+            right = right2;
         }
 
         if(Math.abs(forward) > Math.abs(right) && Math.abs(forward) > Math.abs(clockwise)) {
@@ -212,9 +219,9 @@ public class  MovementControls extends OpMode
 
         if(controlOverride == false) {
             //setting new target for vertical arm to reach and bounding it between two values
-            if (armVertical.getCurrentPosition() < -5500) {
+            if (armVertical.getCurrentPosition() < -6100) {
                 arm_vert = (float) .2;
-            } else if (armVertical.getCurrentPosition() < -5300 && arm_vert < 0) {
+            } else if (armVertical.getCurrentPosition() < -5900 && arm_vert < 0) {
                 arm_vert = (float) 0;
             }
 
@@ -230,16 +237,29 @@ public class  MovementControls extends OpMode
                 arm_horiz = (float) 0;
             }
 
-            if (armHorizontal.getCurrentPosition() < 0 && arm_horiz < 0) {
+            if (armHorizontal.getCurrentPosition() < -1640 && arm_horiz < 0) {
                 arm_horiz = 0;
             }
 
-            if(armGrab.getPosition() <= .25 && servoMovement <= 0) {
-                servoMovement = (float).25;
-            } else if (armGrab.getPosition() >= .8 && servoMovement >= 0) {
-                servoMovement = (float).8;
+            if(armGrab.getPosition() <= .35 && servoMovement <= 0) {
+                servoMovement = (float).35;
+            } else if (armGrab.getPosition() >= 1.0 && servoMovement >= 0) {
+                servoMovement = (float)1.0;
             }
+
+            if(shouldReset) {
+                armHorizontal.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armVertical.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+                armHorizontal.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                armVertical.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                shouldReset = false;
+            }
+        } else if(controlOverride == true) {
+            shouldReset = true;
         }
+
         armGrab.setPosition(servoMovement);
         armVertical.setPower(arm_vert * armVertChange);
         armHorizontal.setPower(arm_horiz * armHorizChange);
@@ -248,11 +268,11 @@ public class  MovementControls extends OpMode
         boolean rightBumper = gamepad2.right_bumper;
 
         if(leftBumper || rightBumper) {
-            servoLeft.setPosition(.5);
-            servoRight.setPosition(.5);
-        } else {
             servoLeft.setPosition(0);
             servoRight.setPosition(1);
+        } else {
+            servoLeft.setPosition(.5);
+            servoRight.setPosition(.5);
         }
         //makes sure values found are not outside of range of possible inputs   x: (-1, 1)
         front_left = clip(front_left,-1,1);
@@ -261,13 +281,15 @@ public class  MovementControls extends OpMode
         rear_left = clip(rear_left, -1,1);
 
         boolean isB = gamepad1.b;
+        boolean isA = gamepad1.a;
 
         //processing whether a slow mode should be implemented
         if(isB) {
             isSlow = true;
-        } else {
+        } else if (isA) {
             isSlow = false;
         }
+
 
         //if yes slows robot by 1/5
         if(isSlow) {
@@ -292,6 +314,8 @@ public class  MovementControls extends OpMode
             servoPosition = "not grabbing";
         }
 
+        telemetry.addData("Last Slow mode", lastSlowTime);
+        telemetry.addData("Current Time", System.currentTimeMillis());
         telemetry.addData("front servo position",  servoPosition);
         telemetry.addData("arm grabber", armGrab.getPosition());
         telemetry.addData("arm horiz", armHorizontal.getPower());

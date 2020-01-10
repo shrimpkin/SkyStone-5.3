@@ -215,7 +215,6 @@ public class TestingVuforia extends LinearOpMode {
                 }
             }
         }
-
         if (tfod != null) {
             tfod.shutdown();
         }
